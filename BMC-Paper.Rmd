@@ -1,0 +1,147 @@
+---
+title: "BMC-Paper"
+author: "Daksh Saksena"
+date: "February 7th 2023"
+---
+
+This is an R markdown notebook replicating the process from a paper on biomarkers in atrial fibrillation from Li-Da Wu et. al. 
+Citation: Wu, LD., Li, F., Chen, JY. et al. Analysis of potential genetic biomarkers using machine learning methods and immune infiltration regulatory mechanisms underlying atrial fibrillation.
+BMC Med Genomics 15, 64 (2022). https://doi.org/10.1186/s12920-022-01212-0
+
+Before starting, this is my first R markdown file on my local system, so I want to download some packages.
+
+```{r}
+setwd("/Users/dakshsaksena/Desktop/Practice-Coder/Biomarker")
+
+
+```
+
+First, we need to download two datasets (GSE41177 and GSE79768) related to Atrial fibrillation (AF) from GEO, and this can be done through GEOquery. 
+
+```{r}
+if (require("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+
+BiocManager::install("GEOquery")
+```
+
+Now, to download the datasets 
+
+```{r}
+library(GEOquery)
+gds <- getGEO("GPL570")
+my_id <- "GSE41177"
+gse <- getGEO(my_id)
+my_id2 <- "GSE79768"
+
+gse2 <- getGEO(my_id2)
+
+my_id3 <- "GSE14975"
+gse3 <- getGEO(my_id3)
+
+```
+
+Lets look at the data first, I found a super helpful video on this called https://www.youtube.com/watch?v=JQ24T9fpXvg
+```{r}
+## check how many platforms used
+length(gse)
+gse <-gse[[1]]
+gse
+pData(gse)$data_processing[1]
+
+## have a look on the expression value
+summary(exprs(gse))
+```
+```{r}
+gse2 <- getGEO(my_id2)
+length(gse2)
+gse2 <-gse2[[1]]
+gse2
+summary(exprs(gse2))
+
+```
+# length(gse3)
+# gse3 <-gse3[[1]]
+# gse3
+# pData(gse3)$data_processing[1]
+
+## have a look on the expression value
+#summary(exprs(gse2))
+
+```
+The values look well within 0 to 16, but lets still perform log2 transformation since that is what the authors did. 
+Now, to perform log2 expression, we do this, then look at the expression value again, and then plot it
+```{r}
+## have a look on the expression value
+summary(exprs(gse))
+# summary(exprs(gse2))
+# summary(exprs(gse3))
+exprs(gse) <- log2(exprs(gse))
+summary(exprs(gse))
+
+boxplot(exprs(gse),outline=F)
+```
+
+Similarly, for gse2
+
+```{r}
+exprs(gse2) <- log2(exprs(gse2))
+summary(exprs(gse2))
+
+boxplot(exprs(gse2),outline=F)
+```
+
+
+```{r}
+## have a look on the expression value
+summary(exprs(gse2))
+# summary(exprs(gse2))
+# summary(exprs(gse3))
+exprs(gse2) <- log2(exprs(gse2))
+summary(exprs(gse2))
+
+boxplot(exprs(gse2),outline=F)
+```
+
+Both plots look similar, and according to me the log2 expression did not change much, however, it is still imperative.
+
+The next step of the paper is performing data processing and DEGs screening, which is done with the help of an R/bioconductor package called limma. 
+After downnlading and calling limma, Wu et. al proceeded to perform Log2-transformation and background correction to the datasets. 
+```{r}
+BiocManager::install("limama")
+library ("limma")
+```
+Method of background correcting for the purpose of assessing differential expression. Method is taken from Limma documentation
+```{r}
+gse <- backgroundCorrect(gse, method="normexp", offset=50)
+gse2 = backgroundCorrect(gse2, method="normexp", offset=50)
+```
+Now to merge them
+
+```{r}
+comb_gse = combine (gse,gse2)
+```
+
+And, now, we have to visualise then
+```{r}
+install.packages("pheatmap")
+install.packages("ggplot2")
+ 
+# load package
+library(pheatmap)
+library(ggplot2)
+
+
+#Visualise heatmap and volcano plot
+pheatmap(comb_gse)
+```
+
+:::
+Before performing batch effect adjustment, I wanted to learn what it is exactly. The authors used SVA package to do batch effect adjustment.
+From the SVA package, Batch effects are sub-groups of measurements that have qualitatively different behaviour across conditions and are 
+unrelated to the biological or scientific variables in a study. 
+
+
+# Do batch Effect adjustment, as I did not understand how to use SVA package to do 
+
+
